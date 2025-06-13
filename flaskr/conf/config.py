@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-SERVER_NAME = "127.0.0.1:9000"
+#SERVER_NAME = '127.0.0.1:9000'
+SERVER_NAME = '172.16.1.101:9000'
 DEBUG = True
 
 # DB MySQL
