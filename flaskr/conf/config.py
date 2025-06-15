@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
+# 服务器监听地址和端口
 #SERVER_NAME = '127.0.0.1:9000'
 SERVER_NAME = '172.16.1.101:9000'
 DEBUG = True
 
-# DB MySQL
+# DB MySQL数据库配置
 SQLALCHEMY_DATABASE_URI = "mysql+pymysql://test:0bee89b07@192.168.111.128:3306/blog_dev?charset=utf8mb4"
 SQLALCHEMY_TRACK_MODIFICATIONS = "False"
