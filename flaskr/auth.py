@@ -16,6 +16,7 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 # 2.2 在 APP 中导入模块并注册蓝图
 
 # 2.3 创建第一个视图函数，注册
+# @bp.route 关联了 URL /register 和 register 视图函数。当 Flask 收到一个指向 /auth/register 的请求时就会调用 register 视图并把其返回值作为响应。
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
 	# 如果接收到的是 POST 请求，则走如下逻辑；
@@ -52,13 +53,65 @@ def register():
 	return render_template('auth/register.html')
 	
 
-# 2.4 创建第二个视图函数，注册
+# 2.4 创建第二个视图函数，登陆，登陆视图和注册视图函数的原理相同；
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
-	
-			
-			
+	# 如果用户端请求是 POST 请求，则走下面的逻辑；
+	if request.method == 'POST':
+		# 获取用户端输入的用户名和密码；
+		username = request.form['username']
+		password = request.form['password']
 		
-		
+		error = None
+		# 获取数据库中的用户
+		user = db.session.execute(
+								text("select * from where username = ?",(username, ))
+								).fetchone()
+		# 如果数据库中没有对应的用户，则为无此用户						
+		if user is None:
+			app.logger.error(f"{user} is Incorrect username.")
+		elif not check_password_hash(user['password'], password):
+			app.logger.error("Incorrect password.")
+			
+		# 如果 error 值为空，则执行如下逻辑
+		if error is None:
+			session.clear()
+			session['user_id'] = user['id']
+			return redirect(url_for('index'))
+			
+		flash(error)
 	
+	# 如果用户请求不是 POST 请求，则返回登陆页面
+	return render_template('auth/login.html')
+			
+# bp.before_app_request() 注册一个 在视图函数之前运行的函数，不论其 URL 是什么。
+# load_logged_in_user 检查用户 id 是否已经储存在 session 中，并从数据库中获取用户数据，
+# 然后储存在 g.user 中。 g.user 的持续时间比请求要长。 如果没有用户 id ，或者 id 不存在，那么 g.user 将会是 None 。	
+@bp.before_app_request
+def load_loggged_in_user():
+	user_id = session.get('user_id')	
+	
+	if user_id is None:
+		g.user = None
+	else:
+		g.user = db.session.execute(
+									test('select * from user where is = ?', (user_id, ))
+									).fetchone()
+									
+# 2.5 定义注销功能的路由规则及视图函数
+# 注销的时候需要把用户 id 从 session 中移除。 然后 load_logged_in_user 就不会在后继请求中载入用户了。
+@bp.route('/logout')
+def logout():
+	session.clear()
+	return redirect(url_for('index'))
+		
+# 用户登录以后才能创建、编辑和删除博客帖子。在每个视图中可以使用 装饰器 来完成这个工作。
+def login_required(view):
+	@functools.wraps(view)
+	def wrapped_view(**kwargs):
+		if g.user is None:
+			return redirect(url_for('auth.login'))
+			
+		return view(**kwargs)
+	return wrapped_view
 
