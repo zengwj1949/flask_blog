@@ -17,6 +17,7 @@ db = SQLAlchemy()
 def create_app(test_config=None):
 	# 1、创建 Flask 应用，__name__是一个内置变量，用于确定应用的根路径，影响Flask如何查找资源，如静态文件和模板等‌；
 	app = Flask(__name__)
+	app.secret_key = 'abcdefg$'
 	#print(__name__)
 	
 	# 2、加载配置文件
@@ -49,7 +50,7 @@ def create_app(test_config=None):
 		# 1. 定义SQL(防止 SQL 注入攻击（当使用参数绑定时）)
 		sql = text("select version()")
 		
-		# 2. 执行SQL
+		# 2. 执行SQL（注意，修改语句需要提交）
 		res = db.session.execute(sql)
 		
 		# 3. 获取结果(单行结果)

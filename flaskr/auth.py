@@ -5,7 +5,13 @@ from flask import (
 	)
 from werkzeug.security import check_password_hash, generate_password_hash
 # 数据库配置五、导入构造函数 __init__.py 中的变量或属性（这里需要导入与数据库相关的变量 db）；
+from sqlalchemy import text
 from flaskr import db
+# 导入 Flask 应用上下文，current_app 代表了当前的 app 应用；
+import logging
+from flask import current_app
+# 创建一个 Logger对象；
+logger = logging.getLogger(__name__)
 
 
 # 二、蓝图
@@ -36,12 +42,16 @@ def register():
 		# 2. 如果 error 值为 None，则说明用户输入了用户名和密码，则走下面的逻辑；
 		if error is None:
 			try:
-				db.session.execute(text("insert into user (username, password) values (?, ?)"),
-				(username, generate_password_hash(password)),
+				#sql = text("insert into user (username, password) values ('abc', 'abc')")
+				sql = text(f"insert into user (username, password) values ('{username}', '{generate_password_hash(password)}')")
+				db.session.execute(
+				#text(f"insert into user (username, password) values ('{username}', '{generate_password_hash(password)}')")
+				sql
 				)
-				app.logger.info(f"user {username} is created.")
-			except db.IntegrityError:
-				app.logger.error(f"user {username} is already registered.")
+				db.session.commit()
+				logger.info(f"user {username} is created.")
+			except Exception as e:
+				logger.error(f"Create user error: {e}")
 			else:
 				# 如果 try 中的代码执行成功，即用户创建成功，则返回登陆页面；
 				return redirect(url_for('auth.login'))
@@ -65,7 +75,7 @@ def login():
 		error = None
 		# 获取数据库中的用户
 		user = db.session.execute(
-								text("select * from where username = ?",(username, ))
+								text(f"select * from where username = {username}")
 								).fetchone()
 		# 如果数据库中没有对应的用户，则为无此用户						
 		if user is None:
@@ -95,7 +105,7 @@ def load_loggged_in_user():
 		g.user = None
 	else:
 		g.user = db.session.execute(
-									test('select * from user where is = ?', (user_id, ))
+									test(f'select * from user where id = "{user_id}"')
 									).fetchone()
 									
 # 2.5 定义注销功能的路由规则及视图函数
