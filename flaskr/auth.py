@@ -4,9 +4,11 @@ from flask import (
 	Blueprint, flash, g, redirect, render_template, request, session, url_for
 	)
 from werkzeug.security import check_password_hash, generate_password_hash
+
 # 数据库配置五、导入构造函数 __init__.py 中的变量或属性（这里需要导入与数据库相关的变量 db）；
 from sqlalchemy import text
 from flaskr import db
+
 # 导入 Flask 应用上下文，current_app 代表了当前的 app 应用；
 import logging
 from flask import current_app
@@ -42,12 +44,17 @@ def register():
 		# 2. 如果 error 值为 None，则说明用户输入了用户名和密码，则走下面的逻辑；
 		if error is None:
 			try:
+				# 定义SQL
 				#sql = text("insert into user (username, password) values ('abc', 'abc')")
-				sql = text(f"insert into user (username, password) values ('{username}', '{generate_password_hash(password)}')")
+				sql = text(
+						f"insert into user (username, password) values ('{username}', '{generate_password_hash(password)}')"
+						)
+				# 执行SQL
 				db.session.execute(
 				#text(f"insert into user (username, password) values ('{username}', '{generate_password_hash(password)}')")
 				sql
 				)
+				# 提交SQL
 				db.session.commit()
 				logger.info(f"user {username} is created.")
 			except Exception as e:
@@ -74,23 +81,30 @@ def login():
 		
 		error = None
 		# 获取数据库中的用户
-		user = db.session.execute(
-								text(f"select * from where username = {username}")
-								).fetchone()
-		# 如果数据库中没有对应的用户，则为无此用户						
+		sql = text(f"select * from user where username = '{username}'")
+		user = db.session.execute(sql).fetchone()
+		
+		# 直接通过位置索引获取密码字段
+		hashed_password = user[2]
+
+		#print(hashed_password)
+		# 如果数据库中没有对应的用户，则为无此用户	
 		if user is None:
-			app.logger.error(f"{user} is Incorrect username.")
-		elif not check_password_hash(user['password'], password):
-			app.logger.error("Incorrect password.")
+			#logger.error(f"{user[1]} is Incorrect username.")
+			error = f"{username} is not exist!!!"
+        # 安全地检查之前使用生成的给定存储的密码哈希是否与给定的密码匹配（参数为之前设置密码的哈希值以及当前的新密码）；
+		elif not check_password_hash(hashed_password, password):
+			#logger.error("Incorrect password.")
+			error = "Incorrect password."
 			
 		# 如果 error 值为空，则执行如下逻辑
 		if error is None:
 			session.clear()
-			session['user_id'] = user['id']
+			session['user_id'] = user[0]
 			return redirect(url_for('index'))
 			
 		flash(error)
-	
+		
 	# 如果用户请求不是 POST 请求，则返回登陆页面
 	return render_template('auth/login.html')
 			
