@@ -23,18 +23,21 @@ bp = Blueprint('blog', __name__)
 # 2.2 在 app 中导入模块并注册蓝图
 
 # 2.3 定义默认页面的路由规则和视图函数
+# 默认页面会显示所有博客帖子；
 @bp.route('/')
 def index():
+	# 1. 获取数据；
 	# 定义SQL
 	sql = text("""
-			select p.id, title, body, created, author_id, username,
+			select p.id, title, body, created, author_id, username
 			from post p join user u on p.author_id = u.id
 			order by created desc
-	""")
+			""")
 	
 	# 执行SQL
 	posts = db.session.execute(sql).fetchall()
 	
+	# 2. 把数据传递给前端页面进行展示；
 	return render_template('blog/index.html', posts=posts)
 	
 	

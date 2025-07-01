@@ -11,7 +11,7 @@ from flaskr import db
 
 # 导入 Flask 应用上下文，current_app 代表了当前的 app 应用；
 import logging
-from flask import current_app
+#from flask import current_app
 # 创建一个 Logger对象；
 logger = logging.getLogger(__name__)
 
@@ -58,6 +58,7 @@ def register():
 				db.session.commit()
 				logger.info(f"user {username} is created.")
 			except Exception as e:
+				# 如果 try 执行失败，则在日志中添加如下错误日志；
 				logger.error(f"Create user error: {e}")
 			else:
 				# 如果 try 中的代码执行成功，即用户创建成功，则返回登陆页面；
@@ -119,7 +120,7 @@ def load_loggged_in_user():
 		g.user = None
 	else:
 		g.user = db.session.execute(
-									test(f'select * from user where id = "{user_id}"')
+									text(f'select * from user where id = "{user_id}"')
 									).fetchone()
 									
 # 2.5 定义注销功能的路由规则及视图函数
