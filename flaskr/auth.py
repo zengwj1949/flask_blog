@@ -79,8 +79,9 @@ def login():
 		# 获取用户端输入的用户名和密码；
 		username = request.form['username']
 		password = request.form['password']
-		
+		# 定义错误为 None
 		error = None
+		
 		# 获取数据库中的用户
 		sql = text(f"select * from user where username = '{username}'")
 		user = db.session.execute(sql).fetchone()
@@ -98,7 +99,7 @@ def login():
 			#logger.error("Incorrect password.")
 			error = "Incorrect password."
 			
-		# 如果 error 值为空，则执行如下逻辑
+		# 如果 error 值为空，说明用户是存在的，则执行如下逻辑；
 		if error is None:
 			session.clear()
 			session['user_id'] = user[0]
