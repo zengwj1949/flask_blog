@@ -50,6 +50,9 @@ def create():
 		# 获取请求的数据
 		title = request.form['title']
 		body = request.form['body']
+		#print(type(title))
+		#print(type(body))
+		#print('--->', g.user)
 		
 		error = None
 		
@@ -60,7 +63,7 @@ def create():
 		if error is not None:
 			flash(error)
 		else:
-			sql = text(f"insert into post (title, body, author_id) values ({title}, {body}, {g.user['id']})")
+			sql = text(f"insert into post (title, body, author_id) values ('{title}', '{body}', '{g.user[0]}')")
 			db.session.execute(sql)
 			db.session.commit()
 			
