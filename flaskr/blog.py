@@ -83,14 +83,18 @@ def get_post(id, check_author=True):
 	:param check_author:
 	:return 
 	'''
-	sql = text(f"select p.id, title, body, created, author_id, username from post p JOIN user on p.author_id = u.id where plid = {id}")
+	sql = text(f"select p.id, title, body, created, author_id, username \
+				from post p JOIN user u on p.author_id = u.id where p.id = {id}")
 	post = db.session.execute(sql).fetchone()
+	#print('post ->', post)
+	#print('g.user -->', g.user[0])
 	
 	if post is None:
 		# abort() 会引发一个特殊的异常，返回一个 HTTP 状态码。
 		abort(404, f"Post id {id} doesn't exist.")
 		
-	if check_author and post['author_id'] != g.user['id']:
+	#if check_author and post[0] != g.user[0]:
+	if check_author and post[0] != id:
 		abort(403)
 	
 	return post 
@@ -106,6 +110,7 @@ def update(id):
 	:return:
 	'''
 	# 获取函数的返回值；
+	#print('id -->', id)
 	post = get_post(id)
 	
 	# 如果请求方式是 POST，则走如下逻辑：
@@ -122,7 +127,7 @@ def update(id):
 			flash(error)
 			
 		else:
-			sql = text(f"update post set title = {title}, body = {body} where id = {id}")
+			sql = text(f"update post set title = '{title}', body = '{body}' where id = '{id}'")
 			db.session.execute(sql)
 			db.session.commit()
 			return redirect(url_for('blog.index'))
