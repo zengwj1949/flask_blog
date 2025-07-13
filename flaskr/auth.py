@@ -103,6 +103,7 @@ def login():
 		if error is None:
 			session.clear()
 			session['user_id'] = user[0]
+			logger.info(f"用户 {username} is login.")
 			return redirect(url_for('index'))
 			
 		flash(error)
@@ -128,6 +129,15 @@ def load_loggged_in_user():
 # 注销的时候需要把用户 id 从 session 中移除。 然后 load_logged_in_user 就不会在后继请求中载入用户了。
 @bp.route('/logout')
 def logout():
+	# 获取当前登陆用户
+	#print(session['user_id'])
+	user_id = session['user_id']
+	
+	sql = text(f"select username from user where id = {user_id}")
+	user = db.session.execute(sql).fetchone()
+	#print(user[0])
+	logger.info(f"user {user[0]} is logout.")
+	
 	session.clear()
 	return redirect(url_for('index'))
 		

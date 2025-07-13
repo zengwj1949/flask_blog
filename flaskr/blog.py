@@ -34,7 +34,7 @@ def index():
 			order by created desc
 			""")
 	
-	# 执行SQL
+	# 执行SQL，并获取数据；
 	posts = db.session.execute(sql).fetchall()
 	
 	# 2. 把数据传递给前端页面进行展示；
