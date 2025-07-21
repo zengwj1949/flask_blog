@@ -1,17 +1,20 @@
 # 一、导入模块
 import os
-from flask import Flask
+from flask import Flask, jsonify
 
 # 数据库配置一、导入数据库相关模块
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 import pymysql
+from flask_redis import FlaskRedis
+
 
 # 日志配置一、导入日志模块
 import logging
 
 # 数据库配置二、数据库实例要初始化组件对象（先实例化），延后关联 Flask 应用
 db = SQLAlchemy()
+redis_db = FlaskRedis()
 
 
 # 二、编写工厂函数，此函数返回值是一个 Flask 实例；
@@ -27,6 +30,7 @@ def create_app(test_config=None):
 	
 	# 3、数据库配置三、数据库关联 Flask 应用；
 	db.init_app(app)
+	redis_db.init_app(app)
 	
 	# 4、日志配置二、定义日志配置
 	logging.basicConfig(level = logging.INFO,
@@ -95,14 +99,22 @@ def create_app(test_config=None):
 		for row in all_rows:
 			print(row.id, row.name)
 		
-		'''
-		
+		'''	
 		# 4. 返回查询结果；
 		if version_row:
 			app.logger.info(f'返回数据记录 {version_row}')
 			return f"<h2>{version_row}</h2>"
 		else:
 			return "404"
+			
+	@app.route('/getredis')
+	def redis_test():
+		'''
+		验证 Redis 连接是否正常；
+		'''
+		redis_db.set('test', 'TEST')
+		value = redis_db.get('test')
+		return f"<h2>'test: '{value.decode('utf-8')}</h2>"
 			
 	# 在 APP 中导入模块并注册蓝图，使用 app.register_blueprint() 导入并注册 蓝图。新的代码放在工厂函数的尾部返回应用之前。
 	from . import auth
