@@ -1,6 +1,6 @@
 # 一、导入模块
 from flask import (
-	Blueprint, flash, g, redirect, render_template, request, url_for
+	Blueprint, flash, g, redirect, render_template, request, url_for, jsonify
 )
 from werkzeug.exceptions import abort
 from flaskr.auth import login_required
@@ -8,6 +8,9 @@ from flaskr.auth import login_required
 # 导入数据库模块
 from sqlalchemy import text
 from flaskr import db
+from flaskr import redis_db
+import json 
+
 
 # 导入日志模块
 import logging
@@ -24,6 +27,7 @@ bp = Blueprint('blog', __name__)
 
 # 2.3 定义默认页面的路由规则和视图函数
 # 默认页面会显示所有博客帖子；
+'''
 @bp.route('/')
 def index():
 	# 1. 获取数据；
@@ -39,7 +43,49 @@ def index():
 	
 	# 2. 把数据传递给前端页面进行展示；
 	return render_template('blog/index.html', posts=posts)
+'''
+@bp.route('/')
+def index():
+	# 此函数启用了 Redis:
+	CACHE_KEY = 'blog_posts'
 	
+	# 尝试从 Redis 获取缓存数据
+	cached_data = redis_db.get(CACHE_KEY)
+	
+	if cached_data:
+		# 如果缓存存在，则直接使用缓存；
+		posts = json.loads(cached_data)
+	else:
+		sql = text("""
+				select p.id, title, body, created, author_id, username
+				from post p join user u on p.author_id = u.id
+				order by created desc
+				""")
+	
+		# 执行SQL，并获取数据；
+		db_posts = db.session.execute(sql).fetchall()
+		#print(db_posts)
+		
+		# 将结果转换为字典列表（方便 json 序列化）；
+		posts = []
+		for post in db_posts:
+			posts.append({
+				'id': post.id,
+				'title': post.title,
+				'body': post.body,
+				'created': post.created.isoformat(),
+				'author_id': post.author_id,
+				'username': post.username
+			})
+		
+		# 将结果存入 Redis，设置 600 秒过期时间；
+		redis_db.setex(CACHE_KEY, 600, json.dumps(posts))
+		
+	return render_template('blog/index.html', posts=posts)
+	
+	# 在创建或更新文章的视图函数中，删除缓存以确保数据最新。在 create 和 update 路由中添加：
+	#redis_db.delete('blog_posts')
+
 	
 # 2.4 定义创建博客的路由规则和视图函数
 # create 视图与 register 视图原理相同。要么显示表单，要么发送内容 已通过验证且内容已加入数据库，或者显示一个出错信息。	
