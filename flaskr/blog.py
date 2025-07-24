@@ -47,15 +47,18 @@ def index():
 @bp.route('/')
 def index():
 	# 此函数启用了 Redis:
-	CACHE_KEY = 'blog_posts'
+	# 1. 定义Redis的KEY；
+	CACHE_KEY = 'dev:blog:posts'
 	
-	# 尝试从 Redis 获取缓存数据
+	# 2. 尝试从 Redis 获取缓存数据
 	cached_data = redis_db.get(CACHE_KEY)
 	
+	# 3. 如果能从缓存中读取数据，则把数据赋值给 posts; 如果绑在中没有数据，则从数据库获取；
 	if cached_data:
-		# 如果缓存存在，则直接使用缓存；
+		# 如果缓存存在，则直接使用缓存，并赋值给 posts; 
 		posts = json.loads(cached_data)
 	else:
+		# 定义 SQL 语句；
 		sql = text("""
 				select p.id, title, body, created, author_id, username
 				from post p join user u on p.author_id = u.id
@@ -79,8 +82,9 @@ def index():
 			})
 		
 		# 将结果存入 Redis，设置 600 秒过期时间；
-		redis_db.setex(CACHE_KEY, 600, json.dumps(posts))
-		
+		redis_db.setex(CACHE_KEY, 300, json.dumps(posts))
+	
+	# 把获取到的数据传递给前端页面变量；	
 	return render_template('blog/index.html', posts=posts)
 	
 	# 在创建或更新文章的视图函数中，删除缓存以确保数据最新。在 create 和 update 路由中添加：
