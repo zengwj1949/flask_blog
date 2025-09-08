@@ -38,13 +38,14 @@ def create_app(test_config=None):
                     filename = "logs/blog.log",           # 日志写入文件必须开启此项，否则默认输出到标准输出即终端；
                     filemode = 'a'                        # 日志写入文件必须开启此项，否则默认输出到标准输出即终端；
                     )
-	
+	logger = logging.getLogger(__name__)
 	# 创建测试页面（简单的路由规则和视图函数）
 	# 调用此接口可以得知服务是否正常；
 	@app.route('/hello')
 	def hello():
 		# 日志配置三、写入日志
-		app.logger.info('日志记录测试')
+		#app.logger.info('日志记录测试')
+		logger.info('日志记录测试')
 		return '<h>Hello, World!</h>'
 		
 	# 测试数据库连接是否正常
